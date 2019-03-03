@@ -99,6 +99,14 @@ void A_output(struct msg message) {
 	send->checksum = checksum;
 	
 	buffer[tail] = send;
+	
+	if (head == tail){
+		stoptimer_A();
+		starttimer_A(inc);
+	}
+	
+	tolayer3_A(*send);
+	
 	tail = (tail+1)%SIZE;
 	bufferSize++;
 }
@@ -121,15 +129,28 @@ void A_input(struct pkt packet) {
 	
 }
 
-void A_timerinterrupt() {
-	
+void A_timerinterrupt() {		// we waited long enough, resend entire buffer
+	if (head > tail){	// we are at point of circling
+		stoptimer_A();
+		starttimer_A(inc);
+		for (int i = head; i < SIZE; i++)
+			tolayer3_A(*(buffer[i]));
+		for (int i = 0; i <= tail; i++)
+			tolayer3_A(*(buffer[i]));
+	}
+	else{
+		stoptimer_A();
+		starttimer_A(inc);
+		for (int i = head; i <= tail; i++)
+			tolayer3_A(*(buffer[i]));
+	}
 	
 }
 
 
 /**** B ENTITY ****/
 int seqnum2;
-struct msg send;
+
 
 void B_init() {
 	seqnum2 = 0;
@@ -158,6 +179,8 @@ void B_input(struct pkt packet) {
 	//packet.checksum = verSum;	// we don't need this since checksum has to be equal to versum for it to be successful
 	packet.acknum = 0;		// success code
 	tolayer3_B(packet);		// send success message
+	
+	struct msg send;
 	
 	send.length = packet.length;
 	
