@@ -1,58 +1,57 @@
-<!DOCTYPE html>
-<html lang="" dir="" class="Mrphs-html">
-    <head>
-        <meta charset="utf-8">
-        <title>Login Required - UVACollab</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1">        
-		<link href="/library/skin/morpheus-default/tool.css" type="text/css" rel="stylesheet" media="all" />
-		<script src="/library/skin/morpheus-default/js/lib/modernizr.js"></script>
-    </head>
-    <body class="portalBody Mrphs-portalBody">
-    	<form id="Mrphs-xlogin" method="post" action="https://collab.its.virginia.edu/access/login" >
-            <h1>Login Required</h1>
-            <aside class="logo"></aside>
-        	    		<fieldset>
-		                   			<div>
-				<h3>UVA users</h3>
-				<a href="https://collab.its.virginia.edu/access/login?containerLogin=true">Log in with NetBadge (click here)</a>
-			</div>
-			<div>
-				<h3>Guest users</h3>
-                                <span>&nbsp;</span>
-			</div>
-                      			<label for="eid">email address</label>
-    			<input name="eid" id="eid" value="" type="text" size="15"/>
-    			<label for="pw">password</label>
-    			<input name="pw" id="pw" value="" type="password" onfocus="this.passwordfocus = true; " size="15"/>
-    			    			<p class="buttons">
-    			    				<input name="submit" type="submit" id="submit" value="Login"/>
-    			    			</p>
-    			    				<p>
-    					<a href="https://collab.its.virginia.edu/portal/site/!gateway/page/9649f80b-49a9-4697-005b-445ef009082c">Lost Password?</a>
-    				</p>
-    					     		</fieldset>
-    	</form>
-    	    	<script>
-    		var portal       = 'body';
-    	    var needJQuery   = true;
-    	    var secondJQuery = false;
-    	    if ( window.jQuery ) {
-    	        tver = jQuery.fn.jquery;
-    	        if ( tver.indexOf('1.9.') == 0 ) {
-    	            needJQuery = false;
-    	        } else {
-    	            secondJQuery = true;
-    	        }
-    	    }
-    	    if ( needJQuery ) {
-    	        document.write('\x3Cscript src="/library/webjars/jquery/1.11.3/jquery.min.js">'+'\x3C/script>')
-    	        document.write('\x3Cscript src="/library/webjars/jquery-migrate/1.4.0/jquery-migrate.min.js">'+'\x3C/script>')
-    	    }
-    	</script>
-    	<script>
-    	    $PBJQ = jQuery; // The Portal's jQuery (also in $ for now)
-    	</script>
-    	<script src="/library/skin/morpheus-default/js/morpheus.plugins.min.js"></script>
-    	<script src="/library/skin/morpheus-default/js/morpheus.scripts.min.js"></script>
-    </body>
-</html>
+#pragma once
+
+/******************************************************************************/
+/*                                                                            */
+/* ENTITY DEFINITIONS                                                         */
+/*                                                                            */
+/******************************************************************************/
+
+// These are the functions that must be implemented to achieve the reliable
+// transport protocols. These functions will be called by simulator in response
+// to the various networking events.
+//
+// DO NOT MODIFY THIS FILE. All grading will be done with an original copy of
+// this file even if this file is included in the submission.
+
+#include "simulator.h"
+
+
+/****** FUNCTION SIGNATURES ***************************************************/
+
+// These are the public functions provided by the entities that the simulator
+// will call.
+
+
+/**** A ENTITY ****/
+
+// This routine will be called once by the simulator before any other entity
+// "A" routines are called. This can be used to initialize any state if needed.
+void A_init();
+
+// This function is called when layer 5 on the "A" entity has data that should
+// be sent to entity "B". That is, the passed in `message` is being output from
+// entity "A" and should be passed over the network to entity "B".
+void A_output(struct msg message);
+
+// This function is called when a packet arrives from the network destined for
+// entity "A". That is, the `packet` is passed from layer 3 to layer 4 and is
+// being input to entity "A".
+void A_input(struct pkt packet);
+
+// This function will be called when entity "A"'s timer has fired.
+void A_timerinterrupt();
+
+
+/**** B ENTITY ****/
+
+// This routine will be called once by the simulator before any other entity
+// "B" routines are called. This can be used to initialize any state if needed.
+void B_init();
+
+// This function is called when a packet arrives from the network destined for
+// entity "B". That is, the `packet` is passed from layer 3 to layer 4 and is
+// being input to entity "B".
+void B_input(struct pkt packet);
+
+// This function will be called when entity "B"'s timer has fired.
+void B_timerinterrupt();
