@@ -4,8 +4,8 @@
 /*                                                                            */
 /******************************************************************************/
 
-// Student names:
-// Student computing IDs:
+// Student names: Muhtasim Ahmed, Annie Khuu
+// Student computing IDs: ma2qf, ak6eh
 //
 //
 // This file contains the actual code for the functions that will implement the
@@ -46,10 +46,12 @@
 // `output.dat`.
 
 #include <stdio.h>
+#include <stddef.h>
+#include <stdlib.h>
 #include "simulator.h"
 
-#define BUFFERSIZE 5		// size of virtual buffer
-#define SIZE 100				// actual size of array
+#define BUFFERSIZE 1500		// size of virtual buffer
+#define SIZE 3000				// actual size of array
 
 /**** A ENTITY ****/
 struct pkt * buffer[SIZE];						// circular buffer
@@ -66,7 +68,7 @@ void A_init() {
 	tail = 0;
 	seqnum = 0;
 	bufferSize = 0;			
-	inc = 10.0;
+	inc = 200.0;
 }
 
 // this method may not be necessary with a circuclar array
@@ -100,9 +102,12 @@ void A_output(struct msg message) {
 	
 	buffer[tail] = send;
 	
-	if (head == tail){
+	if (head == tail){			// If head == tail, this is first element in buffer and so we start timer 
 		stoptimer_A();
 		starttimer_A(inc);
+	} 
+	else {							// need to indicate when we are sending even though our buffer isn't empty (we've already sent some)
+		printf("Sending packet seq: %d but still waiting on ack from packet seq: %d \n", buffer[tail]->seqnum, buffer[head]->seqnum); 
 	}
 	
 	tolayer3_A(*send);
@@ -130,19 +135,27 @@ void A_input(struct pkt packet) {
 }
 
 void A_timerinterrupt() {		// we waited long enough, resend entire buffer
+
+	printf("Timeout, resending packets: \n");
 	if (head > tail){	// we are at point of circling
 		stoptimer_A();
 		starttimer_A(inc);
-		for (int i = head; i < SIZE; i++)
+		for (int i = head; i < SIZE; i++){
+			printf("Resending seq: %d \n", buffer[i]->seqnum);
 			tolayer3_A(*(buffer[i]));
-		for (int i = 0; i <= tail; i++)
+		}
+		for (int i = 0; i <= tail; i++){
+			printf("Resending seq: %d \n", buffer[i]->seqnum);
 			tolayer3_A(*(buffer[i]));
+		}
 	}
 	else{
 		stoptimer_A();
 		starttimer_A(inc);
-		for (int i = head; i <= tail; i++)
+		for (int i = head; i <= tail; i++){
+			printf("Resending seq: %d \n", buffer[i]->seqnum);
 			tolayer3_A(*(buffer[i]));
+		}
 	}
 	
 }
