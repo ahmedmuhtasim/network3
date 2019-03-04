@@ -53,6 +53,8 @@
 #define BUFFERSIZE 1500		// size of virtual buffer
 #define SIZE 3000				// actual size of array
 
+#define DEBUG 1
+
 /**** A ENTITY ****/
 struct pkt * buffer[SIZE];						// circular buffer
 int head;
@@ -118,16 +120,20 @@ void A_output(struct msg message) {
 
 void A_input(struct pkt packet) {
 	
+	#if DEBUG
+	printf("A got packet \n");
+	#endif
+	
 	if (packet.acknum == 0){				///not checking for corruption of acknum for now, its pretty silly, because we'd have to be very very unlucky to get acknum=0 when receiver wanted to send acknum=1... maybe give acknum=1 a more complex value: 0b111111111?
 		if (packet.seqnum == buffer[head]->seqnum){
+			#if DEBUG
+			printf("ack packet is head of buffer \n");
+			#endif
 			free(buffer[head]);
 			head = (head+1)%SIZE;
 			bufferSize--;
 			stoptimer_A();
 			starttimer_A(inc);
-		}
-		else {
-			// guessing we do nothing if its out of order?
 		}
 	}
 	
@@ -135,6 +141,13 @@ void A_input(struct pkt packet) {
 }
 
 void A_timerinterrupt() {		// we waited long enough, resend entire buffer
+
+	if (head == tail){
+		#if DEBUG
+		printf("nothing on buffer to resend \n");
+		#endif
+		return;
+	}
 
 	printf("Timeout, resending packets: \n");
 	if (head > tail){	// we are at point of circling
@@ -170,6 +183,17 @@ void B_init() {
 }
 
 void B_input(struct pkt packet) {
+	
+	#if DEBUG
+	printf("B got packet \n");
+	
+	printf("%d %d %d \n", packet.length, packet.seqnum, packet.checksum);
+	
+	for (int i = 0; i < packet.length; i++)
+		printf("val %c \n", packet.payload[i]);
+	
+	#endif
+	
 	int verSum = 0;
 	
 	verSum += packet.length;
@@ -177,16 +201,26 @@ void B_input(struct pkt packet) {
 	for (int i = 0; i < packet.length; i++)
 		verSum += (int)(packet.payload[i]);
 	
+	#if DEBUG
+	printf("versum %d \n", verSum);
+	#endif
+	
 	if (verSum != packet.checksum){	//corrupted
+	/*
 		packet.checksum = verSum + 1;	// do we need this? will entity_A do the same check?.... the +1 accounts for the acknum value in versum... aka: versum += acknum
 		packet.acknum = 1;		// corrupt code
 		tolayer3_B(packet);		// send corrupt message (do we still care about receiver checksum?
+	*/
 		return;
 	}
 		
 	// what do I do if it is out of order (seqnum != seqnum2), also need to verify that this is not a duplicate
 	if (packet.seqnum != seqnum2)
 		return;
+	
+	#if DEBUG
+		printf("successfull transferred \n");
+	#endif
 	
 	// if it came here, success... 
 	//packet.checksum = verSum;	// we don't need this since checksum has to be equal to versum for it to be successful
@@ -198,7 +232,7 @@ void B_input(struct pkt packet) {
 	send.length = packet.length;
 	
 	for (int i = 0; i < packet.length; i++)
-		send.data[i] += (int)(packet.payload[i]);
+		send.data[i] = packet.payload[i];
 	
 	tolayer5_B (send);
 	
